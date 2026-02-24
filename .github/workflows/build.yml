@@ -8,7 +8,13 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    # KEY: These permissions allow the job to push to GitHub Container Registry.
+    # 'packages: write' lets GITHUB_TOKEN authenticate with ghcr.io.
+    # Without this, the push step would get a 403 Forbidden error.
+    permissions:
+      contents: read
+      packages: write
     
     steps:
       - name: Checkout repository
@@ -36,3 +42,32 @@ jobs:
             linux/arch/x86_64/boot/bzImage
             busybox/rootfs.img
             src/*.ko
+
+      # ------------------------------------------------------------------
+      # Docker image build and push to GitHub Container Registry (GHCR)
+      #
+      # GHCR image address: ghcr.io/<owner>/<repo>:latest
+      # No external accounts needed — GITHUB_TOKEN is auto-provided.
+      # ------------------------------------------------------------------
+
+      - name: Log in to GitHub Container Registry
+        # Only push on commits to master, not on pull requests.
+        # PR builds don't have write permissions to the registry by default,
+        # and we don't want to publish unreviewed code as :latest.
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          # GITHUB_TOKEN is injected automatically by Actions — no manual secret needed.
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          # github.repository is 'owner/repo', lowercased automatically by
+          # the action. GHCR requires all image names to be lowercase.
+          tags: ghcr.io/${{ github.repository }}:latest
