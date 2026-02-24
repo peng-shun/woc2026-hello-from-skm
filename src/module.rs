@@ -29,7 +29,7 @@ impl kernel::Module for SASTKernelModule {
         pr_info!("Device: /dev/tetris\n");
         pr_info!("Controls: a=left, d=right, s=down, w=rotate, space=drop, r=reset\n");
 
-        panic!("Try fix me!");
+        // panic!("Try fix me!");
         let _dev = tetris::register_tetris_device()?;
 
         Ok(Self { _dev })
