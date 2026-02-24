@@ -32,6 +32,8 @@ ifconfig eth0 up
 udhcpc -i eth0
 telnetd -l /bin/sh
 insmod /lib/modules/magic.ko
+insmod /lib/modules/woc2026_hello_from_skm.ko
+mount -t debugfs none /sys/kernel/debug
 
 clear
 cat <<'BANNER'
@@ -51,6 +53,7 @@ Try:
   - List modules:      lsmod
   - Explore devices:   ls -l /dev
   - Execute the tool:  play_tetris
+  - Explore debugfs:   cd /sys/kernel/debug/tetris_debugfs
 BANNER
 solve_magic
 EOF

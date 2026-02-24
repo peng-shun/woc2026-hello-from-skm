@@ -27,7 +27,7 @@ const TETRIS_IOCTL_RESET: u32 = 0x8005;
 
 /// Tetromino shapes (7 standard pieces)
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum TetrominoType {
+pub(crate) enum TetrominoType {
     I,
     O,
     T,
@@ -35,6 +35,20 @@ enum TetrominoType {
     Z,
     J,
     L,
+}
+
+impl TetrominoType {
+    pub(crate) fn as_str(&self) -> &'static str {
+        match self {
+            Self::I => "I",
+            Self::O => "O",
+            Self::T => "T",
+            Self::S => "S",
+            Self::Z => "Z",
+            Self::J => "J",
+            Self::L => "L",
+        }
+    }
 }
 
 /// Precomputed shape matrix for all rotations
@@ -70,7 +84,7 @@ impl ShapeMatrix {
 
 /// Tetromino piece with position and rotation
 #[derive(Debug, Clone, Copy)]
-struct Tetromino {
+pub(crate) struct Tetromino {
     piece_type: TetrominoType,
     x: i32,
     y: i32,
@@ -78,6 +92,22 @@ struct Tetromino {
 }
 
 impl Tetromino {
+    pub(crate) fn piece_type_str(&self) -> &'static str {
+        self.piece_type.as_str()
+    }
+
+    pub(crate) fn x(&self) -> i32 {
+        self.x
+    }
+
+    pub(crate) fn y(&self) -> i32 {
+        self.y
+    }
+
+    pub(crate) fn rotation(&self) -> u8 {
+        self.rotation
+    }
+
     const SHAPES: [ShapeMatrix; 7] = [
         ShapeMatrix::from_base([
             [false, false, false, false],
@@ -185,18 +215,73 @@ impl PRNG {
 }
 
 /// Game state
-struct TetrisGame {
+pub(crate) struct TetrisGame {
     board: [[bool; BOARD_WIDTH]; BOARD_HEIGHT],
     current_piece: Option<Tetromino>,
     score: u32,
     game_over: bool,
-    next_piece_type: TetrominoType,
+    pub(crate) next_piece_type: TetrominoType,
     bag: [TetrominoType; 7],
     bag_idx: usize,
     prng: PRNG,
+
+    // Statistics
+    lines_cleared_total: u32,
+    lines_by_type: [u32; 4],
+    pieces_spawned: u32,
+    pieces_by_type: [u32; 7],
+    pub(crate) ticks: u64,
 }
 
 impl TetrisGame {
+    pub(crate) fn current_piece(&self) -> Option<&Tetromino> {
+        self.current_piece.as_ref()
+    }
+
+    pub(crate) fn is_game_over(&self) -> bool {
+        self.game_over
+    }
+
+    pub(crate) fn score(&self) -> u32 {
+        self.score
+    }
+
+    pub(crate) fn next_piece_type_str(&self) -> &'static str {
+        self.next_piece_type.as_str()
+    }
+
+    pub(crate) fn bag_idx(&self) -> usize {
+        self.bag_idx
+    }
+
+    pub(crate) fn prng_state(&self) -> u64 {
+        self.prng.state
+    }
+
+    pub(crate) fn pieces_spawned(&self) -> u32 {
+        self.pieces_spawned
+    }
+
+    pub(crate) fn lines_cleared_total(&self) -> u32 {
+        self.lines_cleared_total
+    }
+
+    pub(crate) fn pieces_by_type(&self) -> &[u32; 7] {
+        &self.pieces_by_type
+    }
+
+    pub(crate) fn lines_by_type(&self) -> &[u32; 4] {
+        &self.lines_by_type
+    }
+
+    pub(crate) fn bag_remaining(&self) -> &[TetrominoType] {
+        &self.bag[self.bag_idx..]
+    }
+
+    pub(crate) fn bag_used(&self) -> &[TetrominoType] {
+        &self.bag[..self.bag_idx]
+    }
+
     fn new() -> Self {
         /*
          * Seed with a fast-changing clock value and mix in an address so that
@@ -223,21 +308,31 @@ impl TetrisGame {
             ],
             bag_idx: 7,
             prng,
+            lines_cleared_total: 0,
+            lines_by_type: [0; 4],
+            pieces_spawned: 0,
+            pieces_by_type: [0; 7],
+            ticks: 0,
         };
 
         game.next_piece_type = game.next_piece_from_bag();
         game
     }
 
-    fn reset(&mut self) {
+    pub(crate) fn reset(&mut self) {
         self.board = [[false; BOARD_WIDTH]; BOARD_HEIGHT];
         self.current_piece = None;
         self.score = 0;
         self.game_over = false;
+        self.lines_cleared_total = 0;
+        self.lines_by_type = [0; 4];
+        self.pieces_spawned = 0;
+        self.pieces_by_type = [0; 7];
+        self.ticks = 0;
         self.spawn_piece();
     }
 
-    fn spawn_piece(&mut self) {
+    pub(crate) fn spawn_piece(&mut self) {
         if self.game_over {
             return;
         }
@@ -247,6 +342,17 @@ impl TetrisGame {
         if self.check_collision(&new_piece) {
             self.game_over = true;
             return;
+        }
+
+        self.pieces_spawned += 1;
+        match self.next_piece_type {
+            TetrominoType::I => self.pieces_by_type[0] += 1,
+            TetrominoType::O => self.pieces_by_type[1] += 1,
+            TetrominoType::T => self.pieces_by_type[2] += 1,
+            TetrominoType::S => self.pieces_by_type[3] += 1,
+            TetrominoType::Z => self.pieces_by_type[4] += 1,
+            TetrominoType::J => self.pieces_by_type[5] += 1,
+            TetrominoType::L => self.pieces_by_type[6] += 1,
         }
 
         self.current_piece = Some(new_piece);
@@ -308,7 +414,7 @@ impl TetrisGame {
         false
     }
 
-    fn move_left(&mut self) -> bool {
+    pub(crate) fn move_left(&mut self) -> bool {
         if let Some(mut piece) = self.current_piece {
             piece.x -= 1;
             if !self.check_collision(&piece) {
@@ -319,7 +425,7 @@ impl TetrisGame {
         false
     }
 
-    fn move_right(&mut self) -> bool {
+    pub(crate) fn move_right(&mut self) -> bool {
         if let Some(mut piece) = self.current_piece {
             piece.x += 1;
             if !self.check_collision(&piece) {
@@ -330,7 +436,7 @@ impl TetrisGame {
         false
     }
 
-    fn move_down(&mut self) -> bool {
+    pub(crate) fn move_down(&mut self) -> bool {
         if let Some(mut piece) = self.current_piece {
             piece.y += 1;
             if !self.check_collision(&piece) {
@@ -344,7 +450,7 @@ impl TetrisGame {
         false
     }
 
-    fn rotate(&mut self) -> bool {
+    pub(crate) fn rotate(&mut self) -> bool {
         if let Some(mut piece) = self.current_piece {
             piece.rotation = (piece.rotation + 1) % 4;
             if !self.check_collision(&piece) {
@@ -355,7 +461,7 @@ impl TetrisGame {
         false
     }
 
-    fn hard_drop(&mut self) {
+    pub(crate) fn hard_drop(&mut self) {
         while self.move_down() {}
     }
 
@@ -405,12 +511,25 @@ impl TetrisGame {
         }
 
         if lines_cleared > 0 {
-            self.score += match lines_cleared {
-                1 => 100,
-                2 => 300,
-                3 => 500,
-                _ => 800,
-            };
+            self.lines_cleared_total += lines_cleared;
+            match lines_cleared {
+                1 => {
+                    self.score += 100;
+                    self.lines_by_type[0] += 1;
+                }
+                2 => {
+                    self.score += 300;
+                    self.lines_by_type[1] += 1;
+                }
+                3 => {
+                    self.score += 500;
+                    self.lines_by_type[2] += 1;
+                }
+                _ => {
+                    self.score += 800;
+                    self.lines_by_type[3] += 1;
+                }
+            }
         }
     }
 
@@ -487,6 +606,56 @@ impl TetrisGame {
         pos
     }
 
+    pub(crate) fn render_ascii_to_buffer(&self, buffer: &mut [u8]) -> usize {
+        let mut pos = 0;
+
+        for i in 0..buffer.len() {
+            buffer[i] = b' ';
+        }
+
+        let mut display_board = self.board;
+
+        if let Some(piece) = self.current_piece {
+            let shape = piece.get_shape();
+            let (min_x, min_y, max_x, max_y) = piece.get_bounds(&shape);
+
+            for i in min_y..=max_y {
+                for j in min_x..=max_x {
+                    if shape[i as usize][j as usize] {
+                        let board_x = piece.x + j;
+                        let board_y = piece.y + i;
+
+                        if !Self::is_out_of_bounds(board_x, board_y) {
+                            display_board[board_y as usize][board_x as usize] = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        let top_border = b"+--------------------+\n";
+        pos += Self::write_bytes(buffer, pos, top_border);
+
+        let left_border = b"|";
+        let right_border = b"|\n";
+        let filled = b"[]";
+        let empty = b"  ";
+
+        for row in &display_board {
+            pos += Self::write_bytes(buffer, pos, left_border);
+            for &cell in row {
+                let bytes: &[u8] = if cell { filled } else { empty };
+                pos += Self::write_bytes(buffer, pos, bytes);
+            }
+            pos += Self::write_bytes(buffer, pos, right_border);
+        }
+
+        let bottom_border = b"+--------------------+\n";
+        pos += Self::write_bytes(buffer, pos, bottom_border);
+
+        pos
+    }
+
     fn write_bytes(buffer: &mut [u8], pos: usize, bytes: &[u8]) -> usize {
         let mut written = 0;
         for &byte in bytes {
@@ -537,8 +706,17 @@ struct TetrisDeviceInner {
     game: kernel::sync::Mutex<TetrisGame>,
 }
 
+kernel::sync::global_lock! {
+    // SAFETY: Initialized in module initializer before first use.
+    pub(crate) unsafe(uninit) static GLOBAL_DEVICE: Mutex<Option<Arc<TetrisDevice>>> = None;
+}
+
 impl TetrisDevice {
-    fn new() -> Result<Arc<Self>> {
+    pub(crate) fn inner_game_lock(&self) -> kernel::sync::lock::Guard<'_, TetrisGame, kernel::sync::lock::mutex::MutexBackend> {
+        self.inner.game.lock()
+    }
+
+    pub(crate) fn init_global() -> Result<()> {
         let inner = Arc::pin_init(
             pin_init!(TetrisDeviceInner {
                 game <- kernel::new_mutex!(TetrisGame::new()),
@@ -547,8 +725,13 @@ impl TetrisDevice {
         )?;
 
         inner.game.lock().spawn_piece();
+        let device = Arc::new(Self { inner }, GFP_KERNEL)?;
 
-        Ok(Arc::new(Self { inner }, GFP_KERNEL)?)
+        // SAFETY: We initialized GLOBAL_DEVICE in the module init.
+        let mut global_device = GLOBAL_DEVICE.lock();
+        *global_device = Some(device);
+
+        Ok(())
     }
 }
 
@@ -557,7 +740,12 @@ impl MiscDevice for TetrisDevice {
     type Ptr = Arc<TetrisDevice>;
 
     fn open(_file: &File, _misc: &MiscDeviceRegistration<Self>) -> Result<Self::Ptr> {
-        TetrisDevice::new()
+        let global_device = GLOBAL_DEVICE.lock();
+        if let Some(device) = global_device.as_ref() {
+            Ok(device.clone())
+        } else {
+            Err(ENODEV)
+        }
     }
 
     fn read_iter(kiocb: Kiocb<'_, Self::Ptr>, iov: &mut IovIterDest<'_>) -> Result<usize> {
