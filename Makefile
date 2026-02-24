@@ -93,9 +93,13 @@ repack-rootfs: $(BUSYBOX_INSTALL)
 	cd $(BUSYBOX_INSTALL) && find . | cpio -o -H newc | gzip > ../rootfs.img; \
 	touch $(ROOTFS_STAMP);
 
+
+KVM ?= 0
+KVM_FLAG := $(if $(filter 1,$(KVM)),-v,)
+
 run: build
 	@echo "Starting QEMU..."
-	scripts/run.sh -b $(BDIR) -k $(KDIR)
+	scripts/run.sh -b $(BDIR) -k $(KDIR) $(KVM_FLAG)
 
 setup:
 	SUBMODULE_DEPTH=$(SUBMODULE_DEPTH) scripts/setup.sh
