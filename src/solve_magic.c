@@ -5,7 +5,7 @@
 #include <sys/ioctl.h>  // ioctl
 #include <errno.h>  // errno
 
-#define MAGIC_DEV "/dev/magic0"
+#define MAGIC_DEV "/dev/magic"
 #define MAGIC_CMD 0x1337
 
 int main() {
