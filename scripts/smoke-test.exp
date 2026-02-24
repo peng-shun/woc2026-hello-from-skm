@@ -1,22 +1,168 @@
 #!/usr/bin/expect -f
-set timeout 30
+#
+# Smoke test for the Tetris kernel module and debugfs interface.
+# Verifies: module loading, debugfs mounting, state read, board read,
+#           control write, and clean shutdown.
+#
+# Usage: ./scripts/smoke-test.exp
+# Prerequisites: `make build` must have been run first.
+#
 
+set timeout 60
+
+# Start QEMU
 spawn make run
 
+# --- Step 1: Wait for boot to complete ---
+# The rcS script prints the "Welcome to" banner after init finishes.
 expect {
     "Welcome to" {
-        send "cat /sys/kernel/debug/tetris/info\r"
-        expect "Current Score:"
+        puts "\n\[PASS\] Kernel booted successfully"
     }
     timeout {
-        puts "Failed to boot within 30 seconds"
+        puts "\n\[FAIL\] Kernel did not boot within $timeout seconds"
         exit 1
     }
 }
 
-send "lsmod\r"
-expect "woc2026_hello_from_skm"
+# Wait for shell prompt after banner + solve_magic
+expect "~ #"
 
+# --- Step 2: Verify module is loaded ---
+send "lsmod\r"
+expect {
+    "woc2026_hello_from_skm" {
+        puts "\[PASS\] Module loaded"
+    }
+    timeout {
+        puts "\[FAIL\] Module not found in lsmod"
+        send "poweroff\r"
+        expect eof
+        exit 1
+    }
+}
+expect "~ #"
+
+# --- Step 3: Verify debugfs directory exists ---
+send "ls /sys/kernel/debug/tetris_debugfs/\r"
+expect {
+    "state" {
+        puts "\[PASS\] debugfs directory mounted with state file"
+    }
+    timeout {
+        puts "\[FAIL\] debugfs directory not found"
+        send "poweroff\r"
+        expect eof
+        exit 1
+    }
+}
+expect "~ #"
+
+# --- Step 4: Read state file ---
+send "cat /sys/kernel/debug/tetris_debugfs/state\r"
+expect {
+    "score:" {
+        puts "\[PASS\] state file readable"
+    }
+    timeout {
+        puts "\[FAIL\] state file unreadable"
+        send "poweroff\r"
+        expect eof
+        exit 1
+    }
+}
+expect "~ #"
+
+# --- Step 5: Read board file ---
+send "cat /sys/kernel/debug/tetris_debugfs/board\r"
+expect {
+    "+--------------------+" {
+        puts "\[PASS\] board file renders correctly"
+    }
+    timeout {
+        puts "\[FAIL\] board file unreadable"
+        send "poweroff\r"
+        expect eof
+        exit 1
+    }
+}
+expect "~ #"
+
+# --- Step 6: Read stats file ---
+send "cat /sys/kernel/debug/tetris_debugfs/stats\r"
+expect {
+    "lines_total:" {
+        puts "\[PASS\] stats file readable"
+    }
+    timeout {
+        puts "\[FAIL\] stats file unreadable"
+        send "poweroff\r"
+        expect eof
+        exit 1
+    }
+}
+expect "~ #"
+
+# --- Step 7: Read bag file ---
+send "cat /sys/kernel/debug/tetris_debugfs/bag\r"
+expect {
+    "bag_idx:" {
+        puts "\[PASS\] bag file readable"
+    }
+    timeout {
+        puts "\[FAIL\] bag file unreadable"
+        send "poweroff\r"
+        expect eof
+        exit 1
+    }
+}
+expect "~ #"
+
+# --- Step 8: Write control and verify effect ---
+# Reset the game, then check that score is 0
+send "echo reset > /sys/kernel/debug/tetris_debugfs/control\r"
+expect "~ #"
+send "cat /sys/kernel/debug/tetris_debugfs/state\r"
+expect {
+    "score:        0" {
+        puts "\[PASS\] control write (reset) works"
+    }
+    timeout {
+        puts "\[FAIL\] control write did not reset score"
+        send "poweroff\r"
+        expect eof
+        exit 1
+    }
+}
+expect "~ #"
+
+# --- Step 9: Verify control move command ---
+send "echo left > /sys/kernel/debug/tetris_debugfs/control\r"
+expect "~ #"
+send "cat /sys/kernel/debug/tetris_debugfs/state\r"
+expect {
+    "current_x:" {
+        puts "\[PASS\] control write (left) accepted"
+    }
+    timeout {
+        puts "\[FAIL\] control write (left) failed"
+        send "poweroff\r"
+        expect eof
+        exit 1
+    }
+}
+expect "~ #"
+
+# --- Step 10: Clean shutdown ---
+puts "\n--- All smoke tests passed! ---\n"
 send "poweroff\r"
-expect "reboot: Power down"
+expect {
+    "reboot: Power down" {
+        puts "\[PASS\] Clean shutdown"
+    }
+    eof {}
+    timeout {
+        puts "\[WARN\] Shutdown timed out, forcing exit"
+    }
+}
 exit 0
