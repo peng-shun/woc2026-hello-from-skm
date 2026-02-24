@@ -3,7 +3,6 @@
 #include <fcntl.h>  // open
 #include <unistd.h> // close
 #include <sys/ioctl.h>  // ioctl
-#include <errno.h>  // errno
 
 #define MAGIC_DEV "/dev/magic"
 #define MAGIC_CMD 0x1337

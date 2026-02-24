@@ -18,12 +18,14 @@ const BOARD_HEIGHT: usize = 20;
 const RENDER_BUFFER_SIZE: usize = 4096;
 
 /// Ioctl command codes
-const TETRIS_IOCTL_LEFT: u32 = 0x8000;
-const TETRIS_IOCTL_RIGHT: u32 = 0x8001;
-const TETRIS_IOCTL_DOWN: u32 = 0x8002;
-const TETRIS_IOCTL_ROTATE: u32 = 0x8003;
-const TETRIS_IOCTL_DROP: u32 = 0x8004;
-const TETRIS_IOCTL_RESET: u32 = 0x8005;
+/// Values must match src/tetris_ioctl.h
+const TETRIS_IOC_MAGIC: u8 = b'T';
+const TETRIS_IOCTL_LEFT: u32 = kernel::ioctl::_IO(TETRIS_IOC_MAGIC as u32, 0x01);
+const TETRIS_IOCTL_RIGHT: u32 = kernel::ioctl::_IO(TETRIS_IOC_MAGIC as u32, 0x02);
+const TETRIS_IOCTL_DOWN: u32 = kernel::ioctl::_IO(TETRIS_IOC_MAGIC as u32, 0x03);
+const TETRIS_IOCTL_ROTATE: u32 = kernel::ioctl::_IO(TETRIS_IOC_MAGIC as u32, 0x04);
+const TETRIS_IOCTL_DROP: u32 = kernel::ioctl::_IO(TETRIS_IOC_MAGIC as u32, 0x05);
+const TETRIS_IOCTL_RESET: u32 = kernel::ioctl::_IO(TETRIS_IOC_MAGIC as u32, 0x06);
 
 /// Tetromino shapes (7 standard pieces)
 #[derive(Debug, Clone, Copy, PartialEq)]
