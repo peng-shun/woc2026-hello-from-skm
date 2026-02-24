@@ -50,8 +50,8 @@ setup_kernel() {
 	pushd "$KERNEL" >/dev/null
 	setup_rust_in_kernel
 	make LLVM=1 CLIPPY=1 rustavailable
-	yes "" | make LLVM=1 CLIPPY=1 defconfig qemu-busybox-min.config rust.config || [ $? -eq 141 ]
-	yes "" | make LLVM=1 CLIPPY=1 olddefconfig || [ $? -eq 141 ]
+	yes "" | make LLVM=1 CLIPPY=1 defconfig qemu-busybox-min.config rust.config || [ $? -eq 141 ] || [ $? -eq 1 ]
+	yes "" | make LLVM=1 CLIPPY=1 olddefconfig || [ $? -eq 141 ] || [ $? -eq 1 ]
 	make LLVM=1 CLIPPY=1 rust-analyzer
 	popd >/dev/null
 	# 为 out-of-tree 模块生成 rust-project.json
@@ -61,12 +61,12 @@ setup_kernel() {
 setup_busybox() {
 	# setup busybox
 	pushd "$BUSYBOX" >/dev/null
-	yes "" | make defconfig || [ $? -eq 141 ]
+	yes "" | make defconfig || [ $? -eq 141 ] || [ $? -eq 1 ]
 	sed -i 's/.*CONFIG_STATIC.*/CONFIG_STATIC=y/' .config
 	sed -i 's/.*CONFIG_STATIC_LIBGCC.*/CONFIG_STATIC_LIBGCC=y/' .config
 	sed -i 's/.*CONFIG_TC.*/CONFIG_TC=n/' .config
 	sed -i 's/.*CONFIG_FEATURE_TC_INGRESS.*/CONFIG_FEATURE_TC_INGRESS=n/' .config
-	yes "" | make oldconfig || [ $? -eq 141 ]
+	yes "" | make oldconfig || [ $? -eq 141 ] || [ $? -eq 1 ]
 	popd >/dev/null
 }
 

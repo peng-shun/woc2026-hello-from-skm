@@ -1,7 +1,7 @@
 [submodule "busybox"]
 	path = busybox
-	url = https://git.busybox.net/busybox/
-	shallow = true
+	url = https://github.com/mirror/busybox.git
+
 
 [submodule "linux"]
 	path = linux

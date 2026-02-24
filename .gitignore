@@ -70,3 +70,4 @@ src/modules.order
 src/modules.order
 .rootfs_stamp
 .dir-locals.el
+busybox_test/

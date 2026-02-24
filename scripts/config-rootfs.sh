@@ -52,6 +52,7 @@ Try:
   - Explore devices:   ls -l /dev
   - Execute the tool:  play_tetris
 BANNER
+solve_magic
 EOF
 	
 	chmod a+x etc/init.d/rcS bin/* sbin/*
