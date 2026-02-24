@@ -47,9 +47,9 @@ qemu-system-x86_64 \
 	-initrd "$BUSYBOX"/rootfs.img \
     -nographic \
     -machine q35 \
-    -enable-kvm \
     -device intel-iommu \
     -cpu host \
     -m 4G \
     -nic user,model=virtio-net-pci,hostfwd=tcp::5555-:23,hostfwd=tcp::5556-:8080 \
-    -append "console=ttyS0,115200 loglevel=3 rdinit=/sbin/init"
+    -append "console=ttyS0,115200 loglevel=3 rdinit=/sbin/init" \
+	# -enable-kvm 
