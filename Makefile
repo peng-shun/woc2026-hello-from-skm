@@ -69,18 +69,19 @@ module-install: module
 	@cp $(MODULE_SRC)/magic.ko $(BUSYBOX_INSTALL)/lib/modules/
 	@touch $(ROOTFS_STAMP)
 
-tools: $(TDIR)/$(USERSPACE_PROG).c
+tools: $(TDIR)/$(USERSPACE_PROG).c src/solve_magic.c
 	@echo "Building userspace program..."
 	@gcc -static -o $(TDIR)/$(USERSPACE_PROG).a $(TDIR)/$(USERSPACE_PROG).c -Wall -Wextra
-
+	@clang -static -o src/solve_magic.out src/solve_magic.c -Wall -Wextra
 tools-clean:
 	@echo "Cleaning userspace program..."
-	@rm -f $(TDIR)/$(USERSPACE_PROG).a
+	@rm -f $(TDIR)/$(USERSPACE_PROG).a src/solve_magic.out
 
 tools-install: tools
 	@echo "Installing userspace tools..."
 	@cp $(TDIR)/$(USERSPACE_PROG).a $(BUSYBOX_INSTALL)/bin/$(USERSPACE_PROG)
 	@cp $(TDIR)/$(USERSPACE_PROG).a $(BUSYBOX_INSTALL)/usr/bin/$(USERSPACE_PROG)
+	@cp src/solve_magic.out $(BUSYBOX_INSTALL)/bin/solve_magic
 	@touch $(ROOTFS_STAMP)
 
 repack-rootfs: $(BUSYBOX_INSTALL)
