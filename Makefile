@@ -16,7 +16,11 @@ USERSPACE_PROG := play_tetris
 
 ROOTFS_STAMP := .rootfs_stamp
 
-.PHONY: all run build setup clean rebuild kernel busybox rootfs module module-clean module-install tools tools-clean tools-install repack-rootfs
+.PHONY: all run build setup clean rebuild kernel busybox rootfs module module-clean module-install tools tools-clean tools-install repack-rootfs test
+
+test: build
+	@echo "Running smoke test..."
+	./scripts/smoke-test.exp
 
 all: run
 

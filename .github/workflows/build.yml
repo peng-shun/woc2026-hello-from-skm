@@ -17,13 +17,16 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc clang lld llvm python3 bc bison flex pkg-config cpio gzip qemu-system libelf-dev
+          sudo apt-get install -y gcc clang lld llvm python3 bc bison flex pkg-config cpio gzip qemu-system libelf-dev expect
           cargo install --locked --version 0.65.1 bindgen-cli
       - name: Setup project (Submodules & Rust)
         run: make setup
 
       - name: Build Kernel, Rootfs and Modules
         run: make build
+
+      - name: Run Smoke Test
+        run: make test
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4

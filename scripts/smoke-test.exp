@@ -1,0 +1,22 @@
+#!/usr/bin/expect -f
+set timeout 30
+
+spawn make run
+
+expect {
+    "Welcome to" {
+        send "cat /sys/kernel/debug/tetris/info\r"
+        expect "Current Score:"
+    }
+    timeout {
+        puts "Failed to boot within 30 seconds"
+        exit 1
+    }
+}
+
+send "lsmod\r"
+expect "woc2026_hello_from_skm"
+
+send "poweroff\r"
+expect "reboot: Power down"
+exit 0
