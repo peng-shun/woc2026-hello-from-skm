@@ -3,7 +3,7 @@
 //! SKM is a simple linux kernel module written in rust.
 
 use kernel::prelude::*;
-
+mod debugfs;
 mod tetris;
 
 module! {
@@ -17,6 +17,7 @@ module! {
 struct SASTKernelModule {
     _dev:
         Pin<kernel::alloc::KBox<kernel::miscdevice::MiscDeviceRegistration<tetris::TetrisDevice>>>,
+    _debugfs: Option<debugfs::TetrisDebugfs>,
 }
 
 #[allow(unreachable_code)]
@@ -29,16 +30,29 @@ impl kernel::Module for SASTKernelModule {
         pr_info!("Device: /dev/tetris\n");
         pr_info!("Controls: a=left, d=right, s=down, w=rotate, space=drop, r=reset\n");
 
-        panic!("Try fix me!");
+        // panic!("Try fix me!");
         let _dev = tetris::register_tetris_device()?;
 
-        Ok(Self { _dev })
+        let _debugfs = match tetris::GLOBAL_DEVICE.lock().as_ref() {
+            Some(dev) => debugfs::TetrisDebugfs::register(dev.clone()).ok(),
+            None => None,
+        };
+
+        Ok(Self { 
+            _dev,
+            _debugfs,
+        })
     }
 }
 
 impl Drop for SASTKernelModule {
     fn drop(&mut self) {
         pr_info!("Tetris module unloading, cleaning up global game state\n");
+
+        let mut global_device = tetris::GLOBAL_DEVICE.lock();
+        *global_device = None;
+        drop(global_device);
+
         pr_info!("bye bye\n");
     }
 }
