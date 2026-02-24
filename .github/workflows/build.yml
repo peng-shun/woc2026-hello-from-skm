@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc clang lld llvm python3 bc bison flex pkg-config cpio gzip qemu-system libelf-dev expect
+          sudo apt-get install -y gcc clang lld llvm clang-format clang-tidy python3 bc bison flex pkg-config cpio gzip qemu-system libelf-dev expect
           cargo install --locked --version 0.65.1 bindgen-cli
       - name: Setup project (Submodules & Rust)
         run: make setup
@@ -33,6 +33,16 @@ jobs:
 
       - name: Run Smoke Test
         run: make test
+
+      - name: Check formatting (rustfmt + clang-format)
+        run: |
+          cargo fmt --check 
+          clang-format --dry-run --Werror tools/*.c src/*.c
+
+      - name: Lint (clippy + clang-tidy)
+        run: |
+          cargo clippy --all-targets -- -D warnings
+          clang-tidy tools/*.c src/*.c
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
