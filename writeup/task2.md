@@ -1,7 +1,3 @@
-
-
-是gpt风味readme
-
 # Task2
 
 ## 任务1
@@ -127,11 +123,13 @@
 
    ## 任务3
 
-   ci详见 https://github.com/peng-shun/woc2026-hello-from-skm/actions
+   ### CI
+   
+   详见 https://github.com/peng-shun/woc2026-hello-from-skm/actions
    
    ![image-20260226030227774](./images/image-20260226030227774.png)
 
-smoketest:
+### smoketest
 
 对任务4的`debugfs`部分:
 
@@ -147,11 +145,15 @@ smoketest:
 
 https://github.com/peng-shun/woc2026-hello-from-skm/actions/runs/22357679500/job/64701845115
 
-## task4
+### docker镜像
 
+可见于: (ghcr)
 
+https://github.com/peng-shun/woc2026-hello-from-skm/pkgs/container/woc2026-hello-from-skm
 
+## 任务4
 
+详见`TETRIS_DEBUGFS.md`
 
 ## 杂项改进
 
