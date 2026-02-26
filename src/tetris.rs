@@ -714,7 +714,9 @@ kernel::sync::global_lock! {
 }
 
 impl TetrisDevice {
-    pub(crate) fn inner_game_lock(&self) -> kernel::sync::lock::Guard<'_, TetrisGame, kernel::sync::lock::mutex::MutexBackend> {
+    pub(crate) fn inner_game_lock(
+        &self,
+    ) -> kernel::sync::lock::Guard<'_, TetrisGame, kernel::sync::lock::mutex::MutexBackend> {
         self.inner.game.lock()
     }
 

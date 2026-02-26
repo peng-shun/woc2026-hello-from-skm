@@ -36,7 +36,7 @@ jobs:
 
       - name: Check formatting (rustfmt + clang-format)
         run: |
-          cargo fmt --check 
+          rustfmt --edition 2021 --check src/*.rs 
           clang-format --dry-run --Werror tools/*.c src/*.c
 
       - name: Lint (clippy + clang-tidy)

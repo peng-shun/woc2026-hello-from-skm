@@ -41,10 +41,7 @@ impl kernel::Module for SASTKernelModule {
             None => None,
         };
 
-        Ok(Self { 
-            _dev,
-            _debugfs,
-        })
+        Ok(Self { _dev, _debugfs })
     }
 }
 

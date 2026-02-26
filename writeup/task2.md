@@ -161,6 +161,6 @@ https://github.com/peng-shun/woc2026-hello-from-skm/pkgs/container/woc2026-hello
 
 - kvm开关 https://github.com/peng-shun/woc2026-hello-from-skm/commit/69b67f7c1d4a8d44bdd32d4d79eb52475ee96de3
 - 本地冒烟: 在 https://github.com/peng-shun/woc2026-hello-from-skm/commit/5df73ab1b205ebe13774bd66b0eb2f79e260cdce 后可通过 `make test`一键冒烟.
-- fmt+linter: https://github.com/peng-shun/woc2026-hello-from-skm/commit/26847956fdc4cd5631e587e6dc0ba53469ee95a3
+- fmt+linter: https://github.com/peng-shun/woc2026-hello-from-skm/commit/26847956fdc4cd5631e587e6dc0ba53469ee95a3 及换用rustfmt  
 
 ioctl 命令魔数头文件绑定没有太多使用, 未提交.

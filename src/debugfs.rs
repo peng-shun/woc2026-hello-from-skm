@@ -3,13 +3,13 @@
 
 //! Debugfs interface for the Tetris game module.
 
+use core::pin::Pin;
 use kernel::{
     c_str,
     debugfs::{Dir, File},
     prelude::*,
     sync::Arc,
 };
-use core::pin::Pin;
 
 use crate::tetris::TetrisDevice;
 
@@ -102,7 +102,7 @@ impl TetrisDebugfs {
                 device.clone(),
                 &|dev: &Arc<TetrisDevice>, f: &mut core::fmt::Formatter<'_>| {
                     let game = dev.inner_game_lock();
-                    
+
                     core::write!(f, "bag_idx:    {}\nremaining:  ", game.bag_idx())?;
                     for p in game.bag_remaining() {
                         core::write!(f, "{} ", p.as_str())?;
@@ -128,22 +128,34 @@ impl TetrisDebugfs {
                     let mut buf = [0u8; 32];
                     let len = core::cmp::min(reader.len(), buf.len());
                     reader.read_slice(&mut buf[..len])?;
-                    
+
                     if let Ok(cmd_str) = core::str::from_utf8(&buf[..len]) {
                         let cmd = cmd_str.trim();
                         let mut game = dev.inner_game_lock();
 
                         match cmd {
-                            "left" => { game.move_left(); },
-                            "right" => { game.move_right(); },
-                            "down" => { game.move_down(); },
-                            "drop" => { game.hard_drop(); },
-                            "rotate" => { game.rotate(); },
-                            "reset" => { game.reset(); },
-                            "tick" => { 
+                            "left" => {
+                                game.move_left();
+                            }
+                            "right" => {
+                                game.move_right();
+                            }
+                            "down" => {
+                                game.move_down();
+                            }
+                            "drop" => {
+                                game.hard_drop();
+                            }
+                            "rotate" => {
+                                game.rotate();
+                            }
+                            "reset" => {
+                                game.reset();
+                            }
+                            "tick" => {
                                 game.ticks += 1;
-                                game.move_down(); 
-                            },
+                                game.move_down();
+                            }
                             _ => {
                                 // For `spawn <type>`
                                 if cmd.starts_with("spawn ") {
@@ -157,9 +169,9 @@ impl TetrisDebugfs {
                                         "Z" | "z" => Some(TetrominoType::Z),
                                         "J" | "j" => Some(TetrominoType::J),
                                         "L" | "l" => Some(TetrominoType::L),
-                                        _ => None
+                                        _ => None,
                                     };
-                                    
+
                                     if let Some(t) = new_type {
                                         game.next_piece_type = t;
                                         game.spawn_piece();
